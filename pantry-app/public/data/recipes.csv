@@ -68,3 +68,8 @@ Donuts,Breads & baked goods,120,flour,egg,milk,butter,sugar,yeast,salt,oil,glaze
 Cream Puffs,Breads & baked goods,90,flour,egg,butter,water,sugar,salt,cream
 Custard Tart (Pastel de Nata),Desserts,60,pastry dough,egg,cream,milk,sugar,cinnamon,vanilla
 Apple Tart,Desserts,60,pastry dough,apple,sugar,butter,cinnamon
+Pizza Margherita,Main courses,25,pizza dough,tomato sauce,mozzarella,basil,olive oil,salt
+Vegetable Pizza,Main courses,30,pizza dough,tomato sauce,mozzarella,bell pepper,onion,mushroom,olive,olive oil,salt
+Pepperoni Pizza,Main courses,25,pizza dough,tomato sauce,mozzarella,pepperoni,olive oil,salt
+Pizza Carbonara,Main courses,30,pizza dough,cream,mozzarella,parmesan,egg,bacon,black pepper,olive oil,salt
+Four Cheese Pizza (Quattro Formaggi),Main courses,30,pizza dough,tomato sauce,mozzarella,parmesan,gorgonzola,goat cheese,olive oil,salt
