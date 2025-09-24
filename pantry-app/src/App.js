@@ -1,69 +1,32 @@
 import React, { useEffect, useMemo, useState } from "react";
+import "./App.css";
 
-// -----------------------------------------------
-// React app (no Tailwind)
-// Tabs: Ingredients • All Recipes • Top 5 Picks
-// Bottom menu for page switching
-// Category prompt before showing recommendations
-// -----------------------------------------------
+/* --------- Simple CSV parser --------- */
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const header = lines[0].split(",").map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const cells = line.split(",").map(c => c.trim());
+    const row = {};
+    header.forEach((h, i) => (row[h] = cells[i] ?? ""));
+    // For the ingredients column, grab everything after the 3rd index
+    row.ingredients = cells.slice(3).map(c => c.trim()).filter(Boolean);
+    return row;
+  });
+}
 
-const INGREDIENTS = [
-  "egg", "milk", "butter", "flour", "sugar", "salt", "pepper",
-  "tomato", "onion", "garlic", "olive oil", "chicken", "beef",
-  "rice", "pasta", "spinach", "mushroom", "cheddar", "mozzarella",
-  "yogurt", "banana", "strawberry", "chocolate", "baking powder",
-  "oats", "lentils", "chickpeas", "tofu", "soy sauce", "lemon",
-  "potato", "carrot", "celery", "cumin", "paprika", "coriander",
-  "coconut milk", "black beans", "tortilla", "avocado"
-];
 
-const RECIPES = [
-  { id: 1, title: "Classic Pancakes", category: "dessert", time: 20, ingredients: ["flour", "milk", "egg", "butter", "sugar", "baking powder", "salt"], },
-  { id: 2, title: "Garlic Butter Pasta", category: "savory", time: 25, ingredients: ["pasta", "butter", "garlic", "olive oil", "parmesan", "pepper", "salt"], },
-  { id: 3, title: "Chicken Rice Bowl", category: "savory", time: 30, ingredients: ["chicken", "rice", "onion", "garlic", "soy sauce", "spinach"], },
-  { id: 4, title: "Chocolate Banana Overnight Oats", category: "dessert", time: 10, ingredients: ["oats", "milk", "banana", "chocolate", "yogurt"], },
-  { id: 5, title: "Budget Lentil Curry", category: "budget", time: 35, ingredients: ["lentils", "onion", "garlic", "cumin", "coriander", "coconut milk", "tomato", "salt"], },
-  { id: 6, title: "Tofu Veggie Stir-fry", category: "vegan", time: 20, ingredients: ["tofu", "soy sauce", "garlic", "onion", "spinach", "mushroom"], },
-  { id: 7, title: "Tomato Basil Soup", category: "budget", time: 30, ingredients: ["tomato", "onion", "garlic", "olive oil", "salt", "pepper"], },
-  { id: 8, title: "Veggie Tacos", category: "vegan", time: 25, ingredients: ["tortilla", "black beans", "onion", "tomato", "avocado", "cumin", "paprika"], },
-  { id: 9, title: "Mushroom Risotto", category: "savory", time: 40, ingredients: ["rice", "mushroom", "onion", "garlic", "butter", "parmesan", "olive oil"], },
-  { id: 10, title: "Strawberry Yogurt Parfait", category: "dessert", time: 5, ingredients: ["strawberry", "yogurt", "oats", "honey"], },
-];
-
-const EXTRA_INGREDIENTS = ["parmesan", "honey", "basil"];
-
-const CATEGORIES = [
-  { key: "dessert", label: "Dessert" },
-  { key: "savory", label: "Savory Meal" },
-  { key: "budget", label: "Meal on a Budget" },
-  { key: "vegan", label: "Vegan" },
-];
 
 function normalizeName(name) {
   return String(name).trim().toLowerCase();
 }
 
-function scoreRecipe(recipe, selectedSet) {
-  const ing = recipe.ingredients.map(normalizeName);
-  let matched = 0;
-  for (const x of ing) if (selectedSet.has(x)) matched++;
-  const missing = ing.length - matched;
-  return { matched, missing };
-}
-
+/* ------------------ UI bits ------------------ */
 function Chip({ active, children, onClick }) {
   return (
     <button
+      className={`chip ${active ? "chip--active" : ""}`}
       onClick={onClick}
-      style={{
-        padding: "6px 12px",
-        margin: "4px",
-        borderRadius: "16px",
-        border: active ? "2px solid black" : "1px solid gray",
-        backgroundColor: active ? "black" : "white",
-        color: active ? "white" : "black",
-        cursor: "pointer"
-      }}
     >
       {children}
     </button>
@@ -72,12 +35,14 @@ function Chip({ active, children, onClick }) {
 
 function RecipeCard({ recipe, matched, missing }) {
   return (
-    <div style={{ border: "1px solid #ddd", borderRadius: "12px", margin: "8px 0", overflow: "hidden" }}>
-      <div style={{ padding: "12px" }}>
-        <h3>{recipe.title}</h3>
-        <small>{recipe.category} • {recipe.time} min</small>
+    <div className="card">
+      <div className="card__body">
+        <h3 className="card__title">{recipe.title}</h3>
+        <small className="card__meta">
+          {recipe.category} • {recipe.time} min
+        </small>
         {typeof matched === "number" && (
-          <div style={{ marginTop: "4px" }}>
+          <div className="card__match">
             Matches: {matched} • Missing: {missing}
           </div>
         )}
@@ -86,20 +51,21 @@ function RecipeCard({ recipe, matched, missing }) {
   );
 }
 
-function IngredientsPage({ selected, toggle }) {
-  const all = useMemo(() => {
-    const s = new Set(INGREDIENTS.concat(EXTRA_INGREDIENTS));
-    RECIPES.forEach(r => r.ingredients.forEach(i => s.add(normalizeName(i))));
-    return Array.from(s).sort();
-  }, []);
-
+/* ------------------ Pages ------------------ */
+function IngredientsPage({ allIngredients, selected, toggle }) {
   return (
-    <div>
-      <h2>Your Ingredients</h2>
-      <p>Tap ingredients you have. Selected: {selected.size}</p>
-      <div>
-        {all.map((name) => (
-          <Chip key={name} active={selected.has(name)} onClick={() => toggle(name)}>
+    <div className="page">
+      <h2 className="page__title">Your Ingredients</h2>
+      <p className="page__hint">
+        Tap ingredients you have. Selected: {selected.size}
+      </p>
+      <div className="chips">
+        {allIngredients.map((name) => (
+          <Chip
+            key={name}
+            active={selected.has(name)}
+            onClick={() => toggle(name)}
+          >
             {name}
           </Chip>
         ))}
@@ -108,52 +74,85 @@ function IngredientsPage({ selected, toggle }) {
   );
 }
 
-function AllRecipesPage({ selected }) {
+function AllRecipesPage({ recipes, selected }) {
   return (
-    <div>
-      <h2>All Recipes</h2>
-      {RECIPES.map((r) => {
-        const { matched, missing } = scoreRecipe(r, selected);
-        return <RecipeCard key={r.id} recipe={r} matched={matched} missing={missing} />;
+    <div className="page">
+      <h2 className="page__title">All Recipes</h2>
+      {recipes.map((r) => {
+        const ing = r.ingredients.map(normalizeName);
+        const matched = ing.filter((i) => selected.has(i)).length;
+        const missing = ing.length - matched;
+        return (
+          <RecipeCard
+            key={r.title}
+            recipe={r}
+            matched={matched}
+            missing={missing}
+          />
+        );
       })}
     </div>
   );
 }
 
-function RecommendationsPage({ selected, category, setCategory }) {
+const CATEGORIES = [
+  { key: "dessert", label: "Dessert" },
+  { key: "savory", label: "Savory Meal" },
+  { key: "budget", label: "Meal on a Budget" },
+  { key: "vegan", label: "Vegan" },
+];
+
+function RecommendationsPage({ recipes, selected, category, setCategory }) {
   const filtered = useMemo(() => {
-    const pool = category ? RECIPES.filter(r => r.category === category) : [];
-    const scored = pool.map(r => ({ r, ...scoreRecipe(r, selected) }));
+    const pool = category ? recipes.filter((r) => r.category === category) : [];
+    const scored = pool.map((r) => {
+      const ing = r.ingredients.map(normalizeName);
+      const matched = ing.filter((i) => selected.has(i)).length;
+      const missing = ing.length - matched;
+      return { r, matched, missing };
+    });
     scored.sort((a, b) => {
       if (b.matched !== a.matched) return b.matched - a.matched;
       if (a.missing !== b.missing) return a.missing - b.missing;
       return a.r.time - b.r.time;
     });
     return scored.slice(0, 5);
-  }, [selected, category]);
+  }, [recipes, selected, category]);
 
   return (
-    <div>
-      <h2>Top 5 Picks</h2>
-      <p>Select a category to continue.</p>
-      <div>
-        {CATEGORIES.map(c => (
-          <Chip key={c.key} active={category === c.key} onClick={() => setCategory(c.key)}>
+    <div className="page">
+      <h2 className="page__title">Top 5 Picks</h2>
+      <p className="page__hint">Select a category to continue.</p>
+      <div className="chips">
+        {CATEGORIES.map((c) => (
+          <Chip
+            key={c.key}
+            active={category === c.key}
+            onClick={() => setCategory(c.key)}
+          >
             {c.label}
           </Chip>
         ))}
         {category && (
-          <button onClick={() => setCategory("")} style={{ marginLeft: "8px" }}>Clear</button>
+          <button className="link-clear" onClick={() => setCategory("")}>
+            Clear
+          </button>
         )}
       </div>
+
       {!category ? (
-        <p>Choose a category above to see recommendations.</p>
+        <p className="empty">Choose a category above to see recommendations.</p>
       ) : filtered.length === 0 ? (
-        <p>No matches yet. Try selecting more ingredients.</p>
+        <p className="empty">No matches yet. Try selecting more ingredients.</p>
       ) : (
         <div>
           {filtered.map((x) => (
-            <RecipeCard key={x.r.id} recipe={x.r} matched={x.matched} missing={x.missing} />
+            <RecipeCard
+              key={x.r.title}
+              recipe={x.r}
+              matched={x.matched}
+              missing={x.missing}
+            />
           ))}
         </div>
       )}
@@ -168,20 +167,30 @@ function BottomNav({ tab, setTab }) {
     { key: "picks", label: "Top 5" },
   ];
   return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, borderTop: "1px solid #ddd", background: "#f8f8f8", display: "flex", justifyContent: "space-around", padding: "8px 0" }}>
-      {items.map(it => (
-        <button key={it.key} onClick={() => setTab(it.key)} style={{ fontWeight: tab === it.key ? "bold" : "normal" }}>
+    <nav className="bottom-nav">
+      {items.map((it) => (
+        <button
+          key={it.key}
+          className={`bottom-nav__btn ${tab === it.key ? "is-active" : ""}`}
+          onClick={() => setTab(it.key)}
+        >
           {it.label}
         </button>
       ))}
-    </div>
+    </nav>
   );
 }
 
+/* ------------------ App ------------------ */
 export default function App() {
   const [tab, setTab] = useState("ingredients");
   const [category, setCategory] = useState("");
   const [selected, setSelected] = useState(new Set());
+
+  const [allIngredients, setAllIngredients] = useState([]);
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadErr, setLoadErr] = useState("");
 
   useEffect(() => {
     try {
@@ -192,25 +201,106 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem("selectedIngredients", JSON.stringify(Array.from(selected)));
+      localStorage.setItem(
+        "selectedIngredients",
+        JSON.stringify(Array.from(selected))
+      );
     } catch {}
   }, [selected]);
+
+  // Load CSV
+  useEffect(() => {
+    async function load() {
+      try {
+        setLoading(true);
+        const res = await fetch("/data/recipes.csv");
+        if (!res.ok) throw new Error("Failed to fetch recipes.csv");
+        const txt = await res.text();
+        const rows = parseCSV(txt);
+
+        const recipesParsed = rows.map((r) => ({
+          title: r.title,
+          category: r.category,
+          time: Number(r.time),
+          ingredients: r.ingredients.map(normalizeName),
+        }));
+
+        // collect all unique ingredients
+        const ingSet = new Set();
+        recipesParsed.forEach((r) =>
+          r.ingredients.forEach((i) => ingSet.add(i))
+        );
+        setAllIngredients(Array.from(ingSet).sort());
+        setRecipes(recipesParsed);
+        setLoadErr("");
+      } catch (e) {
+        setLoadErr(e.message || "Unknown load error");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
 
   function toggle(name) {
     const n = normalizeName(name);
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(n)) next.delete(n); else next.add(n);
+      if (next.has(n)) next.delete(n);
+      else next.add(n);
       return next;
     });
   }
 
+  if (loading) {
+    return (
+      <div className="app">
+        <header className="app__header">
+          <h1 className="app__title">What Can I Cook?</h1>
+        </header>
+        <div className="page"><p>Loading data…</p></div>
+      </div>
+    );
+  }
+
+  if (loadErr) {
+    return (
+      <div className="app">
+        <header className="app__header">
+          <h1 className="app__title">What Can I Cook?</h1>
+        </header>
+        <div className="page"><p style={{color:"#b00020"}}>Error: {loadErr}</p></div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ paddingBottom: "60px" }}>
-      <h1>What Can I Cook?</h1>
-      {tab === "ingredients" && <IngredientsPage selected={selected} toggle={toggle} />}
-      {tab === "all" && <AllRecipesPage selected={selected} />}
-      {tab === "picks" && <RecommendationsPage selected={selected} category={category} setCategory={setCategory} />}
+    <div className="app">
+      <header className="app__header">
+        <h1 className="app__title">What Can I Cook?</h1>
+      </header>
+
+      {tab === "ingredients" && (
+        <IngredientsPage
+          allIngredients={allIngredients}
+          selected={selected}
+          toggle={toggle}
+        />
+      )}
+
+      {tab === "all" && (
+        <AllRecipesPage recipes={recipes} selected={selected} />
+      )}
+
+      {tab === "picks" && (
+        <RecommendationsPage
+          recipes={recipes}
+          selected={selected}
+          category={category}
+          setCategory={setCategory}
+        />
+      )}
+
       <BottomNav tab={tab} setTab={setTab} />
     </div>
   );
