@@ -1,4 +1,3 @@
-// src/pages/RecommendationsPage.jsx
 import React, { useMemo } from "react";
 import Chip from "../components/Chip";
 import RecipeCard from "../components/RecipeCard";
@@ -17,6 +16,8 @@ export default function RecommendationsPage({
   category,
   setCategory,
   onOpen,
+  saved,
+  onToggleSaved,
 }) {
   const filtered = useMemo(() => {
     const pool = category ? recipes.filter((r) => r.category === category) : [];
@@ -64,6 +65,8 @@ export default function RecommendationsPage({
               matched={x.matched}
               missing={x.missing}
               onOpen={() => onOpen(x.r)}
+              saved={saved.has(x.r.title)}
+              onToggleSave={() => onToggleSaved(x.r.title)}
             />
           ))}
         </div>

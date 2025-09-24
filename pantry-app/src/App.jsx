@@ -5,6 +5,7 @@ import IngredientsPage from "./pages/IngredientsPage";
 import AllRecipesPage from "./pages/AllRecipesPage";
 import RecommendationsPage from "./pages/RecommendationsPage";
 import RecipeDetailPage from "./pages/RecipeDetailPage";
+import SavedRecipesPage from "./pages/SavedRecipesPage";
 
 import BottomNav from "./components/BottomNav";
 import { useAppData } from "./hooks/useAppData";
@@ -17,6 +18,8 @@ export default function App() {
     selected,
     toggleIngredient,
     clearPantry,
+    saved,
+    toggleSaved,
     loading,
     loadErr,
   } = useAppData();
@@ -78,6 +81,8 @@ export default function App() {
               recipes={recipes}
               selected={selected}
               onOpen={(r) => setDetailRecipe(r)}
+              saved={saved}
+              onToggleSaved={toggleSaved}
             />
           )}
 
@@ -88,6 +93,18 @@ export default function App() {
               category={category}
               setCategory={setCategory}
               onOpen={(r) => setDetailRecipe(r)}
+              saved={saved}
+              onToggleSaved={toggleSaved}
+            />
+          )}
+
+          {tab === "saved" && (
+            <SavedRecipesPage
+              recipes={recipes}
+              saved={saved}
+              selected={selected}
+              onOpen={(r) => setDetailRecipe(r)}
+              onToggleSaved={toggleSaved}
             />
           )}
         </>

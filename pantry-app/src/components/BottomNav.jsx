@@ -1,4 +1,3 @@
-// src/components/BottomNav.jsx
 import React from "react";
 
 export default function BottomNav({ tab, setTab, show = true }) {
@@ -7,6 +6,7 @@ export default function BottomNav({ tab, setTab, show = true }) {
     { key: "ingredients", label: "Ingredients" },
     { key: "all", label: "All Recipes" },
     { key: "picks", label: "Top 5" },
+    { key: "saved", label: "Saved" }, // 👈 new tab
   ];
   return (
     <nav className="bottom-nav">

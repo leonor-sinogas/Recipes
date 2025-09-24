@@ -7,6 +7,7 @@ export function useAppData() {
   const [allIngredients, setAllIngredients] = useState([]);
   const [ingredientCategoryMap, setIngredientCategoryMap] = useState(new Map());
   const [selected, setSelected] = useState(new Set());
+  const [saved, setSaved] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [loadErr, setLoadErr] = useState("");
 
@@ -24,6 +25,21 @@ export function useAppData() {
       localStorage.setItem("selectedIngredients", JSON.stringify(Array.from(selected)));
     } catch {}
   }, [selected]);
+
+    // restore saved recipes
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("savedRecipes");
+      if (raw) setSaved(new Set(JSON.parse(raw)));
+    } catch {}
+  }, []);
+
+  // persist saved recipes
+  useEffect(() => {
+    try {
+      localStorage.setItem("savedRecipes", JSON.stringify(Array.from(saved)));
+    } catch {}
+  }, [saved]);
 
   // load CSVs
   useEffect(() => {
@@ -91,6 +107,20 @@ export function useAppData() {
     try { localStorage.removeItem("selectedIngredients"); } catch {}
   }
 
+    function clearPantry() {
+    setSelected(new Set());
+    try { localStorage.removeItem("selectedIngredients"); } catch {}
+  }
+
+  function toggleSaved(title) {
+    setSaved((prev) => {
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title);
+      else next.add(title);
+      return next;
+    });
+  }
+
   return {
     recipes,
     allIngredients,
@@ -98,6 +128,9 @@ export function useAppData() {
     selected,
     toggleIngredient,
     clearPantry,
+    clearPantry,
+    saved,
+    toggleSaved,
     loading,
     loadErr,
   };

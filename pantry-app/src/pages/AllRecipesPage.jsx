@@ -1,10 +1,8 @@
-
-// src/pages/AllRecipesPage.jsx
 import React from "react";
 import RecipeCard from "../components/RecipeCard";
 import { normalizeName } from "../utils/csv";
 
-export default function AllRecipesPage({ recipes, selected, onOpen }) {
+export default function AllRecipesPage({ recipes, selected, onOpen, saved, onToggleSaved }) {
   function score(r) {
     const ing = r.ingredients.map(normalizeName);
     const matched = ing.filter((i) => selected.has(i)).length;
@@ -24,6 +22,8 @@ export default function AllRecipesPage({ recipes, selected, onOpen }) {
             matched={matched}
             missing={missing}
             onOpen={() => onOpen(r)}
+            saved={saved.has(r.title)}
+            onToggleSave={() => onToggleSaved(r.title)}
           />
         );
       })}
