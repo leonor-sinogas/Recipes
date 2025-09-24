@@ -10,8 +10,7 @@ function parseCSV(text) {
     const cells = line.split(",").map((c) => c.trim());
     const row = {};
     header.forEach((h, i) => (row[h] = cells[i] ?? ""));
-    // If this row has a combined ingredients list (recipes.csv),
-    // we treat everything after index 2 as ingredients:
+    // rows from recipes.csv: everything after index 2 are ingredients
     if ("title" in row && "category" in row && "time" in row) {
       row.ingredients = cells.slice(3).map((c) => c.trim()).filter(Boolean);
     }
@@ -32,9 +31,9 @@ function Chip({ active, children, onClick }) {
   );
 }
 
-function RecipeCard({ recipe, matched, missing }) {
+function RecipeCard({ recipe, matched, missing, onOpen }) {
   return (
-    <div className="card">
+    <div className="card" onClick={onOpen} style={{ cursor: "pointer" }}>
       <div className="card__body">
         <h3 className="card__title">{recipe.title}</h3>
         <small className="card__meta">
@@ -102,7 +101,7 @@ function IngredientsPage({ allIngredients, ingredientCategoryMap, selected, togg
   );
 }
 
-function AllRecipesPage({ recipes, selected }) {
+function AllRecipesPage({ recipes, selected, onOpen }) {
   function score(r) {
     const ing = r.ingredients.map(normalizeName);
     const matched = ing.filter((i) => selected.has(i)).length;
@@ -115,7 +114,15 @@ function AllRecipesPage({ recipes, selected }) {
       <h2 className="page__title">All Recipes</h2>
       {recipes.map((r) => {
         const { matched, missing } = score(r);
-        return <RecipeCard key={r.title} recipe={r} matched={matched} missing={missing} />;
+        return (
+          <RecipeCard
+            key={r.title}
+            recipe={r}
+            matched={matched}
+            missing={missing}
+            onOpen={() => onOpen(r)}
+          />
+        );
       })}
     </div>
   );
@@ -128,7 +135,7 @@ const CATEGORIES_UI = [
   { key: "vegan", label: "Vegan" },
 ];
 
-function RecommendationsPage({ recipes, selected, category, setCategory }) {
+function RecommendationsPage({ recipes, selected, category, setCategory, onOpen }) {
   const filtered = useMemo(() => {
     const pool = category ? recipes.filter((r) => r.category === category) : [];
     const scored = pool.map((r) => {
@@ -169,7 +176,13 @@ function RecommendationsPage({ recipes, selected, category, setCategory }) {
       ) : (
         <div>
           {filtered.map((x) => (
-            <RecipeCard key={x.r.title} recipe={x.r} matched={x.matched} missing={x.missing} />
+            <RecipeCard
+              key={x.r.title}
+              recipe={x.r}
+              matched={x.matched}
+              missing={x.missing}
+              onOpen={() => onOpen(x.r)}
+            />
           ))}
         </div>
       )}
@@ -177,7 +190,49 @@ function RecommendationsPage({ recipes, selected, category, setCategory }) {
   );
 }
 
-function BottomNav({ tab, setTab }) {
+/* -------- Recipe Detail Page -------- */
+function RecipeDetailPage({ recipe, selected, onBack }) {
+  const ing = recipe.ingredients.map(normalizeName);
+  const have = ing.filter((i) => selected.has(i));
+  const missing = ing.filter((i) => !selected.has(i));
+
+  return (
+    <div className="page">
+      <button className="chip" onClick={onBack} style={{ marginBottom: 12 }}>
+        ← Back
+      </button>
+      <h2 className="page__title">{recipe.title}</h2>
+      <p className="page__hint">
+        {recipe.category} • {recipe.time} min
+      </p>
+
+      <h3 style={{ marginTop: 12 }}>Ingredients you have ({have.length})</h3>
+      {have.length ? (
+        <ul className="ing-list ing-list--have">
+          {have.map((i) => (
+            <li key={`have-${i}`}>{i}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="empty">None selected yet.</p>
+      )}
+
+      <h3 style={{ marginTop: 16 }}>Ingredients you’re missing ({missing.length})</h3>
+      {missing.length ? (
+        <ul className="ing-list ing-list--missing">
+          {missing.map((i) => (
+            <li key={`miss-${i}`}>{i}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="empty">You have everything!</p>
+      )}
+    </div>
+  );
+}
+
+function BottomNav({ tab, setTab, show }) {
+  if (!show) return null;
   const items = [
     { key: "ingredients", label: "Ingredients" },
     { key: "all", label: "All Recipes" },
@@ -209,6 +264,9 @@ export default function App() {
   const [ingredientCategoryMap, setIngredientCategoryMap] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [loadErr, setLoadErr] = useState("");
+
+  // simple in-app “router”: null = list views, object = detail page
+  const [detailRecipe, setDetailRecipe] = useState(null);
 
   useEffect(() => {
     try {
@@ -290,6 +348,7 @@ export default function App() {
     });
   }
 
+  // rendering
   if (loading) {
     return (
       <div className="app">
@@ -312,33 +371,52 @@ export default function App() {
     );
   }
 
+  const showBottomNav = !detailRecipe;
+
   return (
     <div className="app">
       <header className="app__header">
         <h1 className="app__title">What Can I Cook?</h1>
       </header>
 
-      {tab === "ingredients" && (
-        <IngredientsPage
-          allIngredients={allIngredients}
-          ingredientCategoryMap={ingredientCategoryMap}
+      {detailRecipe ? (
+        <RecipeDetailPage
+          recipe={detailRecipe}
           selected={selected}
-          toggle={toggle}
+          onBack={() => setDetailRecipe(null)}
         />
+      ) : (
+        <>
+          {tab === "ingredients" && (
+            <IngredientsPage
+              allIngredients={allIngredients}
+              ingredientCategoryMap={ingredientCategoryMap}
+              selected={selected}
+              toggle={toggle}
+            />
+          )}
+
+          {tab === "all" && (
+            <AllRecipesPage
+              recipes={recipes}
+              selected={selected}
+              onOpen={(r) => setDetailRecipe(r)}
+            />
+          )}
+
+          {tab === "picks" && (
+            <RecommendationsPage
+              recipes={recipes}
+              selected={selected}
+              category={category}
+              setCategory={setCategory}
+              onOpen={(r) => setDetailRecipe(r)}
+            />
+          )}
+        </>
       )}
 
-      {tab === "all" && <AllRecipesPage recipes={recipes} selected={selected} />}
-
-      {tab === "picks" && (
-        <RecommendationsPage
-          recipes={recipes}
-          selected={selected}
-          category={category}
-          setCategory={setCategory}
-        />
-      )}
-
-      <BottomNav tab={tab} setTab={setTab} />
+      <BottomNav tab={tab} setTab={setTab} show={showBottomNav} />
     </div>
   );
 }
