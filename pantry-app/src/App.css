@@ -131,3 +131,11 @@
 .ing-list--missing li::marker {
   color: #b00020; /* red marker for "missing" */
 }
+
+button.chip {
+  cursor: pointer;
+}
+
+button.chip:hover {
+  opacity: 0.85;
+}

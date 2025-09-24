@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState } from "react";
 import "./App.css";
 
@@ -17,6 +16,7 @@ export default function App() {
     ingredientCategoryMap,
     selected,
     toggleIngredient,
+    clearPantry,
     loading,
     loadErr,
   } = useAppData();
@@ -69,6 +69,7 @@ export default function App() {
               ingredientCategoryMap={ingredientCategoryMap}
               selected={selected}
               toggle={toggleIngredient}
+              onClear={clearPantry}
             />
           )}
 

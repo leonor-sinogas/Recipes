@@ -86,12 +86,18 @@ export function useAppData() {
     });
   }
 
+  function clearPantry() {
+    setSelected(new Set());
+    try { localStorage.removeItem("selectedIngredients"); } catch {}
+  }
+
   return {
     recipes,
     allIngredients,
     ingredientCategoryMap,
     selected,
     toggleIngredient,
+    clearPantry,
     loading,
     loadErr,
   };

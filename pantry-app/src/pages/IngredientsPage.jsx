@@ -7,6 +7,7 @@ export default function IngredientsPage({
   ingredientCategoryMap,
   selected,
   toggle,
+  onClear,   // 👈 new prop
 }) {
   const [activeCat, setActiveCat] = useState("all");
 
@@ -33,6 +34,7 @@ export default function IngredientsPage({
         Choose a category, then tap ingredients you have. Selected: {selected.size}
       </p>
 
+      {/* Category filter bar */}
       <div className="chips" style={{ marginBottom: 12 }}>
         {categories.map((c) => (
           <Chip key={c} active={activeCat === c} onClick={() => setActiveCat(c)}>
@@ -41,6 +43,12 @@ export default function IngredientsPage({
         ))}
       </div>
 
+      {/* Clear button */}
+      <button className="chip" style={{ marginBottom: 12 }} onClick={onClear}>
+        Clear All
+      </button>
+
+      {/* Ingredient chips */}
       <div className="chips">
         {visible.length === 0 ? (
           <span className="empty">No ingredients in this category.</span>
