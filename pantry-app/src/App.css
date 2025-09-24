@@ -117,3 +117,17 @@
   padding: 6px 8px;
   font: inherit;
 }
+
+/* Ingredient lists on the detail page */
+.ing-list {
+  margin: 8px 0 12px;
+  padding-left: 18px;
+}
+
+.ing-list--have li::marker {
+  color: #0a7d16; /* green marker for "have" */
+}
+
+.ing-list--missing li::marker {
+  color: #b00020; /* red marker for "missing" */
+}

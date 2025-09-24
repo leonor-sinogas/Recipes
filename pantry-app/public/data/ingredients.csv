@@ -1,44 +1,131 @@
-name
-egg
-milk
-butter
-flour
-sugar
-salt
-pepper
-tomato
-onion
-garlic
-olive oil
-chicken
-beef
-rice
-pasta
-spinach
-mushroom
-cheddar
-mozzarella
-yogurt
-banana
-strawberry
-chocolate
-baking powder
-oats
-lentils
-chickpeas
-tofu
-soy sauce
-lemon
-potato
-carrot
-celery
-cumin
-paprika
-coriander
-coconut milk
-black beans
-tortilla
-avocado
-parmesan
-honey
-basil
+name,category
+avocado,produce
+baking powder,baking
+banana,produce
+basil,produce
+beef,proteins
+bell pepper,produce
+black beans,legumes
+butter,dairy
+cabbage,produce
+carrot,produce
+cheddar,dairy
+chicken,proteins
+chickpeas,legumes
+chocolate,sweets
+cinnamon,spices
+cocoa powder,baking
+coconut milk,pantry
+corn,produce
+coriander,spices
+cucumber,produce
+cumin,spices
+egg,proteins
+flour,baking
+garlic,produce
+ginger,spices
+honey,sweets
+lettuce,produce
+lemon,produce
+lime,produce
+milk,dairy
+mushroom,produce
+oats,grains
+oil,pantry
+olive oil,pantry
+onion,produce
+paprika,spices
+parmesan,dairy
+peas,produce
+peanut butter,pantry
+pepper,spices
+potato,produce
+rice,grains
+salt,spices
+sesame oil,pantry
+soy sauce,condiments
+spinach,produce
+strawberry,produce
+sugar,baking
+tomato,produce
+tofu,proteins
+tortilla,grains
+turmeric,spices
+vanilla,baking
+yogurt,dairy
+pasta,grains
+baking soda,baking
+lettuce mix,produce
+parfait granola,grains
+name,category
+breadcrumbs,baking
+sour cream,dairy
+beef broth,pantry
+mustard,condiments
+nutmeg,spices
+bell pepper,produce
+lemon,produce
+napa cabbage,produce
+bok choy,produce
+scallion,produce
+noodles,grains
+chili oil,condiments
+chicken stock,pantry
+cream,dairy
+parsley,produce
+duck,proteins
+thyme,spices
+nori,pantry
+sesame seeds,pantry
+five spice powder,spices
+hoisin sauce,condiments
+pastry dough,baking
+ground pork,proteins
+shrimp,proteins
+dashi,pantry
+miso paste,condiments
+wakame,pantry
+apples,produce
+mandarins,produce
+cherries,produce
+white bread,grains
+chocolate chips,baking
+heavy cream,dairy
+cheese,dairy
+string cheese,dairy
+margarine,dairy
+deli turkey,proteins
+deli ham,proteins
+balsamic vinegar,condiments
+vegetable oil,pantry
+strawberry jam,condiments
+olives,pantry
+instant ramen (chicken),grains
+instant ramen (shrimp),grains
+instant ramen (soy sauce),grains
+spaghetti,grains
+chocolate milk powder,sweets
+pork,proteins
+white chocolate,sweets
+gelatin,pantry
+vanilla,spices
+almonds,produce
+hazelnuts,produce
+sprinkles,sweets
+cake crumbs,baking
+frosting,sweets
+almond flour,baking
+egg whites,proteins
+powdered sugar,baking
+food coloring,pantry
+condensed milk,pantry
+chocolate sprinkles,sweets
+red food coloring,pantry
+cream cheese,dairy
+molasses,pantry
+ginger,spices
+cloves,spices
+baking soda,baking
+yeast,pantry
+glaze,sweets
+apple,produce

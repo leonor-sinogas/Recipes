@@ -1,33 +1,32 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-/* --------- Simple CSV parser --------- */
+/* --------- Simple CSV parser (expects commas, no quoted fields) --------- */
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
-  const header = lines[0].split(",").map(h => h.trim());
-  return lines.slice(1).map(line => {
-    const cells = line.split(",").map(c => c.trim());
+  if (lines.length < 2) return [];
+  const header = lines[0].split(",").map((h) => h.trim());
+  return lines.slice(1).map((line) => {
+    const cells = line.split(",").map((c) => c.trim());
     const row = {};
     header.forEach((h, i) => (row[h] = cells[i] ?? ""));
-    // For the ingredients column, grab everything after the 3rd index
-    row.ingredients = cells.slice(3).map(c => c.trim()).filter(Boolean);
+    // If this row has a combined ingredients list (recipes.csv),
+    // we treat everything after index 2 as ingredients:
+    if ("title" in row && "category" in row && "time" in row) {
+      row.ingredients = cells.slice(3).map((c) => c.trim()).filter(Boolean);
+    }
     return row;
   });
 }
 
-
-
 function normalizeName(name) {
-  return String(name).trim().toLowerCase();
+  return String(name || "").trim().toLowerCase();
 }
 
 /* ------------------ UI bits ------------------ */
 function Chip({ active, children, onClick }) {
   return (
-    <button
-      className={`chip ${active ? "chip--active" : ""}`}
-      onClick={onClick}
-    >
+    <button className={`chip ${active ? "chip--active" : ""}`} onClick={onClick}>
       {children}
     </button>
   );
@@ -52,50 +51,77 @@ function RecipeCard({ recipe, matched, missing }) {
 }
 
 /* ------------------ Pages ------------------ */
-function IngredientsPage({ allIngredients, selected, toggle }) {
+function IngredientsPage({ allIngredients, ingredientCategoryMap, selected, toggle }) {
+  const [activeCat, setActiveCat] = useState("all");
+
+  const categories = useMemo(() => {
+    const cats = new Set(["all"]);
+    allIngredients.forEach((name) => {
+      const cat = ingredientCategoryMap.get(name) || "other";
+      cats.add(cat);
+    });
+    return Array.from(cats);
+  }, [allIngredients, ingredientCategoryMap]);
+
+  const visible = useMemo(() => {
+    if (activeCat === "all") return allIngredients;
+    return allIngredients.filter(
+      (name) => (ingredientCategoryMap.get(name) || "other") === activeCat
+    );
+  }, [allIngredients, activeCat, ingredientCategoryMap]);
+
   return (
     <div className="page">
       <h2 className="page__title">Your Ingredients</h2>
       <p className="page__hint">
-        Tap ingredients you have. Selected: {selected.size}
+        Choose a category, then tap ingredients you have. Selected: {selected.size}
       </p>
-      <div className="chips">
-        {allIngredients.map((name) => (
-          <Chip
-            key={name}
-            active={selected.has(name)}
-            onClick={() => toggle(name)}
-          >
-            {name}
+
+      {/* Category filter bar */}
+      <div className="chips" style={{ marginBottom: 12 }}>
+        {categories.map((c) => (
+          <Chip key={c} active={activeCat === c} onClick={() => setActiveCat(c)}>
+            {c}
           </Chip>
         ))}
+      </div>
+
+      {/* Ingredient chips */}
+      <div className="chips">
+        {visible.length === 0 ? (
+          <span className="empty">No ingredients in this category.</span>
+        ) : (
+          visible.map((name) => (
+            <Chip key={name} active={selected.has(name)} onClick={() => toggle(name)}>
+              {name}
+            </Chip>
+          ))
+        )}
       </div>
     </div>
   );
 }
 
 function AllRecipesPage({ recipes, selected }) {
+  function score(r) {
+    const ing = r.ingredients.map(normalizeName);
+    const matched = ing.filter((i) => selected.has(i)).length;
+    const missing = ing.length - matched;
+    return { matched, missing };
+  }
+
   return (
     <div className="page">
       <h2 className="page__title">All Recipes</h2>
       {recipes.map((r) => {
-        const ing = r.ingredients.map(normalizeName);
-        const matched = ing.filter((i) => selected.has(i)).length;
-        const missing = ing.length - matched;
-        return (
-          <RecipeCard
-            key={r.title}
-            recipe={r}
-            matched={matched}
-            missing={missing}
-          />
-        );
+        const { matched, missing } = score(r);
+        return <RecipeCard key={r.title} recipe={r} matched={matched} missing={missing} />;
       })}
     </div>
   );
 }
 
-const CATEGORIES = [
+const CATEGORIES_UI = [
   { key: "dessert", label: "Dessert" },
   { key: "savory", label: "Savory Meal" },
   { key: "budget", label: "Meal on a Budget" },
@@ -124,12 +150,8 @@ function RecommendationsPage({ recipes, selected, category, setCategory }) {
       <h2 className="page__title">Top 5 Picks</h2>
       <p className="page__hint">Select a category to continue.</p>
       <div className="chips">
-        {CATEGORIES.map((c) => (
-          <Chip
-            key={c.key}
-            active={category === c.key}
-            onClick={() => setCategory(c.key)}
-          >
+        {CATEGORIES_UI.map((c) => (
+          <Chip key={c.key} active={category === c.key} onClick={() => setCategory(c.key)}>
             {c.label}
           </Chip>
         ))}
@@ -147,12 +169,7 @@ function RecommendationsPage({ recipes, selected, category, setCategory }) {
       ) : (
         <div>
           {filtered.map((x) => (
-            <RecipeCard
-              key={x.r.title}
-              recipe={x.r}
-              matched={x.matched}
-              missing={x.missing}
-            />
+            <RecipeCard key={x.r.title} recipe={x.r} matched={x.matched} missing={x.missing} />
           ))}
         </div>
       )}
@@ -187,8 +204,9 @@ export default function App() {
   const [category, setCategory] = useState("");
   const [selected, setSelected] = useState(new Set());
 
-  const [allIngredients, setAllIngredients] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [allIngredients, setAllIngredients] = useState([]);
+  const [ingredientCategoryMap, setIngredientCategoryMap] = useState(new Map());
   const [loading, setLoading] = useState(true);
   const [loadErr, setLoadErr] = useState("");
 
@@ -201,35 +219,55 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(
-        "selectedIngredients",
-        JSON.stringify(Array.from(selected))
-      );
+      localStorage.setItem("selectedIngredients", JSON.stringify(Array.from(selected)));
     } catch {}
   }, [selected]);
 
-  // Load CSV
+  // Load CSVs from /public/data with a base that works in dev & prod
   useEffect(() => {
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch("/data/recipes.csv");
-        if (!res.ok) throw new Error("Failed to fetch recipes.csv");
-        const txt = await res.text();
-        const rows = parseCSV(txt);
+        const BASE = process.env.PUBLIC_URL || "";
+        const [recRes, ingRes] = await Promise.all([
+          fetch(`${BASE}/data/recipes.csv`),
+          fetch(`${BASE}/data/ingredients.csv`),
+        ]);
 
-        const recipesParsed = rows.map((r) => ({
+        if (!recRes.ok) throw new Error("Failed to fetch recipes.csv");
+        if (!ingRes.ok) throw new Error("Failed to fetch ingredients.csv");
+
+        const [recTxt, ingTxt] = await Promise.all([recRes.text(), ingRes.text()]);
+        const recRows = parseCSV(recTxt);
+        const ingRows = parseCSV(ingTxt);
+
+        // Parse recipes
+        const recipesParsed = recRows.map((r) => ({
           title: r.title,
           category: r.category,
           time: Number(r.time),
-          ingredients: r.ingredients.map(normalizeName),
+          ingredients: (r.ingredients || []).map(normalizeName),
         }));
 
-        // collect all unique ingredients
+        // Build ingredient -> category map
+        const map = new Map();
+        ingRows.forEach((row) => {
+          const name = normalizeName(row.name);
+          const cat = normalizeName(row.category || "other") || "other";
+          if (name) map.set(name, cat);
+        });
+
+        // Aggregate all unique ingredients from recipes
         const ingSet = new Set();
-        recipesParsed.forEach((r) =>
-          r.ingredients.forEach((i) => ingSet.add(i))
-        );
+        recipesParsed.forEach((r) => r.ingredients.forEach((i) => ingSet.add(i)));
+
+        // Ensure every ingredient has a category; default to "other"
+        const completedMap = new Map(map);
+        ingSet.forEach((i) => {
+          if (!completedMap.has(i)) completedMap.set(i, "other");
+        });
+
+        setIngredientCategoryMap(completedMap);
         setAllIngredients(Array.from(ingSet).sort());
         setRecipes(recipesParsed);
         setLoadErr("");
@@ -269,7 +307,7 @@ export default function App() {
         <header className="app__header">
           <h1 className="app__title">What Can I Cook?</h1>
         </header>
-        <div className="page"><p style={{color:"#b00020"}}>Error: {loadErr}</p></div>
+        <div className="page"><p style={{ color: "#b00020" }}>Error: {loadErr}</p></div>
       </div>
     );
   }
@@ -283,14 +321,13 @@ export default function App() {
       {tab === "ingredients" && (
         <IngredientsPage
           allIngredients={allIngredients}
+          ingredientCategoryMap={ingredientCategoryMap}
           selected={selected}
           toggle={toggle}
         />
       )}
 
-      {tab === "all" && (
-        <AllRecipesPage recipes={recipes} selected={selected} />
-      )}
+      {tab === "all" && <AllRecipesPage recipes={recipes} selected={selected} />}
 
       {tab === "picks" && (
         <RecommendationsPage
