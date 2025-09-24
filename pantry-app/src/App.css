@@ -174,3 +174,5 @@ button.chip:hover {
 .star-btn:hover {
   transform: scale(1.05);
 }
+
+.recipe-category { margin: 16px 0 20px; }

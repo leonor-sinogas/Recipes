@@ -3,11 +3,18 @@ import Chip from "../components/Chip";
 import RecipeCard from "../components/RecipeCard";
 import { normalizeName } from "../utils/csv";
 
+// New cookbook-style categories
 const CATEGORIES_UI = [
-  { key: "dessert", label: "Dessert" },
-  { key: "savory", label: "Savory Meal" },
-  { key: "budget", label: "Meal on a Budget" },
-  { key: "vegan", label: "Vegan" },
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Snacks / Light bites",
+  "Appetizers / Starters",
+  "Side dishes",
+  "Main courses",
+  "Desserts",
+  "Breads & baked goods",
+  "Drinks & cocktails",
 ];
 
 export default function RecommendationsPage({
@@ -39,10 +46,15 @@ export default function RecommendationsPage({
     <div className="page">
       <h2 className="page__title">Top 5 Picks</h2>
       <p className="page__hint">Select a category to continue.</p>
+
       <div className="chips">
-        {CATEGORIES_UI.map((c) => (
-          <Chip key={c.key} active={category === c.key} onClick={() => setCategory(c.key)}>
-            {c.label}
+        {CATEGORIES_UI.map((label) => (
+          <Chip
+            key={label}
+            active={category === label}
+            onClick={() => setCategory(label)}
+          >
+            {label}
           </Chip>
         ))}
         {category && (

@@ -107,11 +107,6 @@ export function useAppData() {
     try { localStorage.removeItem("selectedIngredients"); } catch {}
   }
 
-    function clearPantry() {
-    setSelected(new Set());
-    try { localStorage.removeItem("selectedIngredients"); } catch {}
-  }
-
   function toggleSaved(title) {
     setSaved((prev) => {
       const next = new Set(prev);
@@ -127,7 +122,6 @@ export function useAppData() {
     ingredientCategoryMap,
     selected,
     toggleIngredient,
-    clearPantry,
     clearPantry,
     saved,
     toggleSaved,
