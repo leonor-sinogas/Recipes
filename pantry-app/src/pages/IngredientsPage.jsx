@@ -1,5 +1,5 @@
 // src/pages/IngredientsPage.jsx
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import Chip from "../components/Chip";
 
 export default function IngredientsPage({
@@ -7,58 +7,65 @@ export default function IngredientsPage({
   ingredientCategoryMap,
   selected,
   toggle,
-  onClear,   // 👈 new prop
+  onClear, // Clear All handler from App.jsx
 }) {
-  const [activeCat, setActiveCat] = useState("all");
-
-  const categories = useMemo(() => {
-    const cats = new Set(["all"]);
-    allIngredients.forEach((name) => {
+  // Build: { category -> [ingredient, ...] }, sorted
+  const grouped = useMemo(() => {
+    const map = new Map(); // category -> array of names
+    for (const name of allIngredients) {
       const cat = ingredientCategoryMap.get(name) || "other";
-      cats.add(cat);
-    });
-    return Array.from(cats);
+      if (!map.has(cat)) map.set(cat, []);
+      map.get(cat).push(name);
+    }
+    // sort ingredients within each category
+    for (const arr of map.values()) arr.sort((a, b) => a.localeCompare(b));
+    // sort categories (alpha, but put "other" last)
+    const cats = Array.from(map.keys())
+      .sort((a, b) => {
+        if (a === "other") return 1;
+        if (b === "other") return -1;
+        return a.localeCompare(b);
+      });
+    return { map, cats };
   }, [allIngredients, ingredientCategoryMap]);
-
-  const visible = useMemo(() => {
-    if (activeCat === "all") return allIngredients;
-    return allIngredients.filter(
-      (name) => (ingredientCategoryMap.get(name) || "other") === activeCat
-    );
-  }, [allIngredients, activeCat, ingredientCategoryMap]);
 
   return (
     <div className="page">
       <h2 className="page__title">Your Ingredients</h2>
       <p className="page__hint">
-        Choose a category, then tap ingredients you have. Selected: {selected.size}
+        Tap ingredients to toggle. Selected: {selected.size}
       </p>
 
-      {/* Category filter bar */}
-      <div className="chips" style={{ marginBottom: 12 }}>
-        {categories.map((c) => (
-          <Chip key={c} active={activeCat === c} onClick={() => setActiveCat(c)}>
-            {c}
-          </Chip>
-        ))}
+      {/* Actions */}
+      <div className="ingredients-actions">
+        <button className="chip" onClick={onClear}>Clear All</button>
       </div>
 
-      {/* Clear button */}
-      <button className="chip" style={{ marginBottom: 12 }} onClick={onClear}>
-        Clear All
-      </button>
-
-      {/* Ingredient chips */}
-      <div className="chips">
-        {visible.length === 0 ? (
-          <span className="empty">No ingredients in this category.</span>
-        ) : (
-          visible.map((name) => (
-            <Chip key={name} active={selected.has(name)} onClick={() => toggle(name)}>
-              {name}
-            </Chip>
-          ))
-        )}
+      {/* Grouped lists */}
+      <div className="ingredient-groups">
+        {grouped.cats.map((cat) => {
+          const items = grouped.map.get(cat) || [];
+          return (
+            <section key={cat} className="ingredient-group">
+              <h3 className="ingredient-group__title">{cat}</h3>
+              {items.length === 0 ? (
+                <p className="empty">No items.</p>
+              ) : (
+                <div className="chips">
+                  {items.map((name) => (
+                    <Chip
+                      key={name}
+                      active={selected.has(name)}
+                      onClick={() => toggle(name)}
+                    >
+                      {name}
+                    </Chip>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })}
       </div>
     </div>
   );
